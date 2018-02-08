@@ -27,15 +27,6 @@ APlayerPawn::APlayerPawn()
 	OurCamera->SetRelativeLocation(FVector(-250.0f, 0.0f, 250.0f));
 	OurCamera->SetRelativeRotation(FRotator(-45.0f, 0.0f, 0.0f));
 	OurVisibleComponent->SetupAttachment(RootComponent);
-	
-
-	////Mesh
-	/*static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshSphere(TEXT("StaticMesh'/Engine/EngineMeshes/MaterialSphere.FBX"));
-	if (StaticMeshSphere.Object){
-	OurVisibleComponent = Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent);
-		UE_LOG(LogClass, Warning, TEXT("Have found static mesh torus!"));
-		Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent)->SetStaticMesh(StaticMeshSphere.Object);
-	}*/
 }
 
 // Called when the game starts or when spawned
@@ -106,14 +97,6 @@ void APlayerPawn::Move_YAxis(float AxisValue)
 void APlayerPawn::StartGrowing()
 {
 	bGrowing = true;	
-	bool bTest = OurVisibleComponent->IsA<UStaticMeshComponent>();
-	if (bTest) { UE_LOG(LogClass, Warning, TEXT("Is a Static Mesh Component")); }
-	//UE_LOG(LogClass, Warning, TEXT("IsA!  %b"), *bTest);
-	/*for (int32 b = 0; b < ChildrenComponents.Num(); b++)
-	{
-		UE_LOG(LogClass, Warning, TEXT("Calling loop!  %d"), ChildrenComponents.Num());
-		UE_LOG(LogClass, Warning, TEXT("Names: %s"), *ChildrenComponents[b]->GetFName().ToString());
-	}*/
 }
 
 void APlayerPawn::StopGrowing()
