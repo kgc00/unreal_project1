@@ -6,6 +6,8 @@
 #include "Components/InputComponent.h"
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Components/SceneComponent.h"
+#include "Runtime/Engine/Classes/GameFramework/SpringArmComponent.h"
+#include "PlayerPawnMovementComponent.h"
 
 
 // Sets default values
@@ -19,14 +21,47 @@ APlayerPawn::APlayerPawn()
 
 	// Create a dummy root component we can attach things to.
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	// Create a camera and a visible object
-	UCameraComponent* OurCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("OurCamera"));
-	OurVisibleComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OurVisibleComponent"));
-	// Attach our camera and visible object to our root component. Offset and rotate the camera.
-	OurCamera->SetupAttachment(RootComponent);
-	OurCamera->SetRelativeLocation(FVector(-250.0f, 0.0f, 250.0f));
-	OurCamera->SetRelativeRotation(FRotator(-45.0f, 0.0f, 0.0f));
-	OurVisibleComponent->SetupAttachment(RootComponent);
+
+	// Create and position a mesh component so we can see where our sphere is
+	UStaticMeshComponent* CapsuleVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentation"));
+	CapsuleVisual->SetupAttachment(RootComponent);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CapsuleVisualAsset(TEXT("/Game/StarterContent/Shapes/Shape_WideCapsule.Shape_WideCapsule"));
+	if (CapsuleVisualAsset.Succeeded())
+	{
+		CapsuleVisual->SetStaticMesh(CapsuleVisualAsset.Object);
+		CapsuleVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -80.0f));
+		CapsuleVisual->SetWorldScale3D(FVector(0.8f));
+	}
+
+	// Create a particle system that we can activate or deactivate
+	OurParticleSystem = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MovementParticles"));
+	OurParticleSystem->SetupAttachment(CapsuleVisual);
+	OurParticleSystem->bAutoActivate = false;
+	OurParticleSystem->SetRelativeLocation(FVector(-20.0f, 0.0f, 20.0f));
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticleAsset(TEXT("/Game/StarterContent/Particles/P_Fire.P_Fire"));
+	if (ParticleAsset.Succeeded())
+	{
+		OurParticleSystem->SetTemplate(ParticleAsset.Object);
+	}
+
+	// Use a spring arm to give the camera smooth, natural-feeling motion.
+	USpringArmComponent* SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraAttachmentArm"));
+	SpringArm->SetupAttachment(RootComponent);
+	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
+	SpringArm->TargetArmLength = 400.0f;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->CameraLagSpeed = 3.0f;
+
+	// Create a camera and attach to our spring arm
+	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ActualCamera"));
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+
+	// Take control of the default player
+	AutoPossessPlayer = EAutoReceiveInput::Player0;
+
+	// Create an instance of our movement component, and tell it to update our root component.
+	OurMovementComponent = CreateDefaultSubobject<UPlayerPawnMovementComponent>(TEXT("CustomMovementComponent"));
+	OurMovementComponent->UpdatedComponent = RootComponent;
 }
 
 // Called when the game starts or when spawned
@@ -39,33 +74,6 @@ void APlayerPawn::BeginPlay()
 void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// Handle growing and shrinking based on our "Grow" action
-	{
-		float CurrentScale = OurVisibleComponent->GetComponentScale().X;
-		if (bGrowing)
-		{
-			// Grow to double size over the course of one second
-			CurrentScale += DeltaTime;
-		}
-		else
-		{
-			// Shrink half as fast as we grow
-			CurrentScale -= (DeltaTime * 0.5f);
-		}
-		// Make sure we never drop below our starting size, or increase past double size.
-		CurrentScale = FMath::Clamp(CurrentScale, 1.0f, 2.0f);
-		OurVisibleComponent->SetWorldScale3D(FVector(CurrentScale));
-	}
-
-	// Handle movement based on our "MoveX" and "MoveY" axes
-	{
-		if (!CurrentVelocity.IsZero())
-		{
-			FVector NewLocation = GetActorLocation() + (CurrentVelocity * DeltaTime);
-			SetActorLocation(NewLocation);
-		}
-	}
 }
 
 // Called to bind functionality to input
@@ -73,33 +81,45 @@ void APlayerPawn::SetupPlayerInputComponent(class UInputComponent* InputComponen
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 
-	// Respond when our "Grow" key is pressed or released.
-	InputComponent->BindAction("UndefinedAction", IE_Pressed, this, &APlayerPawn::StartGrowing);
-	InputComponent->BindAction("UndefinedAction", IE_Released, this, &APlayerPawn::StopGrowing);
+	InputComponent->BindAction("UndefinedAction", IE_Pressed, this, &APlayerPawn::ParticleToggle);
 
-	// Respond every frame to the values of our two movement axes, "MoveX" and "MoveY".
-	InputComponent->BindAxis("MoveX", this, &APlayerPawn::Move_XAxis);
-	InputComponent->BindAxis("MoveY", this, &APlayerPawn::Move_YAxis);
+	InputComponent->BindAxis("MoveForward", this, &APlayerPawn::MoveForward);
+	InputComponent->BindAxis("MoveRight", this, &APlayerPawn::MoveRight);
+	InputComponent->BindAxis("Turn", this, &APlayerPawn::Turn);
 }
 
-void APlayerPawn::Move_XAxis(float AxisValue)
+UPawnMovementComponent* APlayerPawn::GetMovementComponent() const
 {
-	// Move at 100 units per second forward or backward
-	CurrentVelocity.X = FMath::Clamp(AxisValue, -1.0f, 1.0f) * 100.0f;
+	return OurMovementComponent;
 }
 
-void APlayerPawn::Move_YAxis(float AxisValue)
+void APlayerPawn::MoveForward(float AxisValue)
 {
-	// Move at 100 units per second right or left
-	CurrentVelocity.Y = FMath::Clamp(AxisValue, -1.0f, 1.0f) * 100.0f;
+	if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
+	{
+		OurMovementComponent->AddInputVector(GetActorForwardVector() * AxisValue);
+	}
 }
 
-void APlayerPawn::StartGrowing()
+void APlayerPawn::MoveRight(float AxisValue)
 {
-	bGrowing = true;	
+	if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
+	{
+		OurMovementComponent->AddInputVector(GetActorRightVector() * AxisValue);
+	}
 }
 
-void APlayerPawn::StopGrowing()
+void APlayerPawn::Turn(float AxisValue)
 {
-	bGrowing = false;
+	FRotator NewRotation = GetActorRotation();
+	NewRotation.Yaw += AxisValue;
+	SetActorRotation(NewRotation);
+}
+
+void APlayerPawn::ParticleToggle()
+{
+	if (OurParticleSystem && OurParticleSystem->Template)
+	{
+		OurParticleSystem->ToggleActive();
+	}
 }

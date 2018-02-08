@@ -28,20 +28,16 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditAnywhere)
-		USceneComponent* OurVisibleComponent;
+	UStaticMeshComponent* CapsuleVisual;
 
-	//Input functions
-	void Move_XAxis(float AxisValue);
-	void Move_YAxis(float AxisValue);
-	void StartGrowing();
-	void StopGrowing();
+	UParticleSystemComponent* OurParticleSystem;
+	class UPlayerPawnMovementComponent* OurMovementComponent;
 
-	//Input variables
-	FVector CurrentVelocity;
-	bool bGrowing;
+	virtual UPawnMovementComponent* GetMovementComponent() const override;
 
-	//ParticleSystem
-	UParticleSystemComponent *OurParticleSystem;
-	
-	TArray<USceneComponent*> ChildrenComponents;
+	//input functions
+	void MoveForward(float AxisValue);
+	void MoveRight(float AxisValue);
+	void Turn(float AxisValue);
+	void ParticleToggle();
 };
