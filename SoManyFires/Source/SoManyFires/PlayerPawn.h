@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "PlayerChar.generated.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "PlayerPawn.generated.h"
 
 UCLASS()
-class UNREAL_PROJECT1_API APlayerChar : public APawn
+class SOMANYFIRES_API APlayerPawn : public APawn
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
-	APlayerChar();
+	APlayerPawn();
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,6 +27,20 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	
+	UPROPERTY(EditAnywhere)
+		USceneComponent* OurVisibleComponent;
+
+	//Input functions
+	void Move_XAxis(float AxisValue);
+	void Move_YAxis(float AxisValue);
+	void StartGrowing();
+	void StopGrowing();
+
+	//Input variables
+	FVector CurrentVelocity;
+	bool bGrowing;
+
+	//ParticleSystem
+	UParticleSystemComponent *OurParticleSystem;
 	
 };

@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class unreal_project1 : ModuleRules
+public class SoManyFires : ModuleRules
 {
-	public unreal_project1(ReadOnlyTargetRules Target) : base(Target)
+	public SoManyFires(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
