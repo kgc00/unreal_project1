@@ -27,15 +27,15 @@ APlayerPawn::APlayerPawn()
 	OurCamera->SetRelativeLocation(FVector(-250.0f, 0.0f, 250.0f));
 	OurCamera->SetRelativeRotation(FRotator(-45.0f, 0.0f, 0.0f));
 	OurVisibleComponent->SetupAttachment(RootComponent);
-	OurVisibleComponent = Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent);
-
-	//UE_LOG(LogClass, Warning, TEXT("IsA!  %s"), *OurVisibleComponent->GetName());
+	
 
 	////Mesh
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshOb_torus(TEXT("StaticMesh'/Engine/EditorShapes/Meshes/Shape_Torus.Shape_Torus'"));
-	if (StaticMeshOb_torus.Object){
-		Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent)->SetStaticMesh(StaticMeshOb_torus.Object);
-	}
+	/*static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshSphere(TEXT("StaticMesh'/Engine/EngineMeshes/MaterialSphere.FBX"));
+	if (StaticMeshSphere.Object){
+	OurVisibleComponent = Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent);
+		UE_LOG(LogClass, Warning, TEXT("Have found static mesh torus!"));
+		Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent)->SetStaticMesh(StaticMeshSphere.Object);
+	}*/
 }
 
 // Called when the game starts or when spawned
