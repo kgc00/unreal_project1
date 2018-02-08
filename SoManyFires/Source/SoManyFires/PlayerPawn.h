@@ -43,4 +43,5 @@ public:
 	//ParticleSystem
 	UParticleSystemComponent *OurParticleSystem;
 	
+	TArray<USceneComponent*> ChildrenComponents;
 };

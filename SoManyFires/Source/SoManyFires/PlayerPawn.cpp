@@ -4,6 +4,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/InputComponent.h"
+#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
+#include "Runtime/Engine/Classes/Components/SceneComponent.h"
 
 
 // Sets default values
@@ -25,13 +27,21 @@ APlayerPawn::APlayerPawn()
 	OurCamera->SetRelativeLocation(FVector(-250.0f, 0.0f, 250.0f));
 	OurCamera->SetRelativeRotation(FRotator(-45.0f, 0.0f, 0.0f));
 	OurVisibleComponent->SetupAttachment(RootComponent);
+	OurVisibleComponent = Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent);
+
+	//UE_LOG(LogClass, Warning, TEXT("IsA!  %s"), *OurVisibleComponent->GetName());
+
+	////Mesh
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshOb_torus(TEXT("StaticMesh'/Engine/EditorShapes/Meshes/Shape_Torus.Shape_Torus'"));
+	if (StaticMeshOb_torus.Object){
+		Cast<UStaticMeshComponent, USceneComponent>(OurVisibleComponent)->SetStaticMesh(StaticMeshOb_torus.Object);
+	}
 }
 
 // Called when the game starts or when spawned
 void APlayerPawn::BeginPlay()
 {
-	Super::BeginPlay();
-
+	Super::BeginPlay();	
 }
 
 // Called every frame
@@ -73,8 +83,8 @@ void APlayerPawn::SetupPlayerInputComponent(class UInputComponent* InputComponen
 	Super::SetupPlayerInputComponent(InputComponent);
 
 	// Respond when our "Grow" key is pressed or released.
-	InputComponent->BindAction("Grow", IE_Pressed, this, &APlayerPawn::StartGrowing);
-	InputComponent->BindAction("Grow", IE_Released, this, &APlayerPawn::StopGrowing);
+	InputComponent->BindAction("UndefinedAction", IE_Pressed, this, &APlayerPawn::StartGrowing);
+	InputComponent->BindAction("UndefinedAction", IE_Released, this, &APlayerPawn::StopGrowing);
 
 	// Respond every frame to the values of our two movement axes, "MoveX" and "MoveY".
 	InputComponent->BindAxis("MoveX", this, &APlayerPawn::Move_XAxis);
@@ -95,7 +105,15 @@ void APlayerPawn::Move_YAxis(float AxisValue)
 
 void APlayerPawn::StartGrowing()
 {
-	bGrowing = true;
+	bGrowing = true;	
+	bool bTest = OurVisibleComponent->IsA<UStaticMeshComponent>();
+	if (bTest) { UE_LOG(LogClass, Warning, TEXT("Is a Static Mesh Component")); }
+	//UE_LOG(LogClass, Warning, TEXT("IsA!  %b"), *bTest);
+	/*for (int32 b = 0; b < ChildrenComponents.Num(); b++)
+	{
+		UE_LOG(LogClass, Warning, TEXT("Calling loop!  %d"), ChildrenComponents.Num());
+		UE_LOG(LogClass, Warning, TEXT("Names: %s"), *ChildrenComponents[b]->GetFName().ToString());
+	}*/
 }
 
 void APlayerPawn::StopGrowing()
