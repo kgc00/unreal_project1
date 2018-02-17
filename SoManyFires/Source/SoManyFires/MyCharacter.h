@@ -3,44 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
 #include "Components/StaticMeshComponent.h"
-#include "Camera/CameraComponent.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "Runtime/Engine/Classes/GameFramework/SpringArmComponent.h"
-#include "Runtime/Engine/Classes/Components/BoxComponent.h"
-#include "PlayerPawn.generated.h"
+#include "GameFramework/Character.h"
+#include "MyCharacter.generated.h"
 
 UCLASS()
-class SOMANYFIRES_API APlayerPawn : public APawn
+class SOMANYFIRES_API AMyCharacter : public ACharacter
 {
 	GENERATED_BODY()
-public:
-	// Sets default values for this pawn's properties
-	APlayerPawn(); 
 
+public:
+	// Sets default values for this character's properties
+	AMyCharacter();
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION()
-	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+	UPROPERTY(EditAnywhere)
+	USceneComponent* rootC;
 
 	// Determine static mesh
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UStaticMeshComponent* StaticMesh;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USpringArmComponent* SpringArm;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCameraComponent* Camera;
-
-	// Determine box collider
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UBoxComponent* BoxCollider;
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* CapsuleVisual;
 
 	// Determine particle system
 	UParticleSystemComponent* OurParticleSystem;
@@ -64,9 +57,5 @@ public:
 	UPROPERTY(EditAnywhere)
 	float gravityModifier;
 
-	void ApplyGravity();	
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void ApplyGravity();
 };
