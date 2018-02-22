@@ -79,7 +79,7 @@ void APlayerPawn::BeginPlay()
 	FQuat quatTest = GetActorQuat();
 	if(StaticMesh != nullptr){
 		StaticMesh->SetSimulatePhysics(true);
-		StaticMesh->SetEnableGravity(false);
+		StaticMesh->SetEnableGravity(true);
 		StaticMesh->SetCollisionObjectType(ECC_Pawn);
 		StaticMesh->OnComponentHit.AddDynamic(this, &APlayerPawn::OnHit);
 	}
