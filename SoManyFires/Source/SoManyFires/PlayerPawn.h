@@ -6,6 +6,8 @@
 #include "GameFramework/Pawn.h"
 #include "Components/StaticMeshComponent.h"
 #include "Camera/CameraComponent.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Runtime/Engine/Classes/GameFramework/SpringArmComponent.h"
 #include "Runtime/Engine/Classes/Components/BoxComponent.h"
@@ -55,6 +57,7 @@ public:
 	void Turn(float AxisValue);
 	void ParticleToggle();
 	void Jump();
+	bool isJumping;
 
 	// Implement gravity
 	UPROPERTY(EditAnywhere)
@@ -65,6 +68,15 @@ public:
 	float gravityModifier;
 
 	void ApplyGravity();	
+
+	// Timer logic
+	UPROPERTY(EditAnywhere)
+	int32 jumpTimer;
+	FTimerHandle JumpTimerHandle;
+	UFUNCTION(BlueprintNativeEvent)
+	void JumpTimerFinished();
+	virtual void JumpTimerFinished_Implementation();
+	void AdvanceJumpTimer();	
 
 protected:
 	// Called when the game starts or when spawned

@@ -21,11 +21,9 @@ APlayerPawn::APlayerPawn()
 	
 	// static mesh initialization
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh Component"));
-	//StaticMesh->SetupAttachment(RootComponent);
 
 	// Create a dummy root component we can attach things to.
 	RootComponent = StaticMesh;
-		//CreateDefaultSubobject<UBoxComponent>(TEXT("RootComponent"));
 	
 	// initialize box
 	BoxCollider = CreateDefaultSubobject<UBoxComponent>(TEXT("Box Component"));
@@ -61,17 +59,14 @@ APlayerPawn::APlayerPawn()
 	OurMovementComponent = CreateDefaultSubobject<UPlayerPawnMovementComponent>(TEXT("CustomMovementComponent"));
 	OurMovementComponent->UpdatedComponent = RootComponent;
 
-	
-
-
-
-	//BoxCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerPawn::OnOverlapBegin);
+	jumpTimer = 3;
 }
 
 // Called when the game starts or when spawned
 void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();	
+	isJumping = false;
 	FHitResult *test = new FHitResult;
 	FTransform transformTest = GetTransform();
 	FVector vectorTest = GetActorLocation();
@@ -86,17 +81,22 @@ void APlayerPawn::BeginPlay()
 	if (test != nullptr) {
 		AActor::SetActorLocationAndRotation(vectorTest, rotatorTest, false, test, ETeleportType::None);
 	}
-	else { UE_LOG(LogTemp, Warning, TEXT("Nullptr found")); }
+	else { UE_LOG(LogTemp, Warning, TEXT("Nullptr found")); }	
 }
 
 // Called every frame
 void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//ApplyGravity();
 	FHitResult hr;
-	//StaticMesh->SetRelativeLocation(RootComponent->GetComponentLocation(), false, &hr, ETeleportType::None);
-	
+
+	if (isJumping){
+		if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
+		{
+			OurMovementComponent->AddInputVector(GetActorUpVector() * jumpStrength);
+			UE_LOG(LogTemp, Warning, TEXT("jumping"));
+		}
+	}	
 }
 
 // Called to bind functionality to input
@@ -122,18 +122,9 @@ UPawnMovementComponent* APlayerPawn::GetMovementComponent() const
 
 void APlayerPawn::MoveForward(float AxisValue)
 {	
-	/*FVector CurrentLocation = GetActorLocation();
-	FVector intendedMovement = (CurrentLocation.X + 10.0f, CurrentLocation, CurrentLocation);
-	FHitResult HitResult;
-	APlayerPawn::SetActorLocation(intendedMovement, true, &HitResult, ETeleportType::None);*/
-	/*OurMovementComponent->AddInputVector(GetActorForwardVector() * AxisValue, true);
-	OurMovementComponent->UpdateComponentVelocity();*/
 
 	if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Forward"));
-		//FHitResult Hit;
-		//if (Hit)
 
 		OurMovementComponent->AddInputVector(GetActorForwardVector() * AxisValue * 1000.0f, false);
 	}
@@ -164,7 +155,10 @@ void APlayerPawn::ParticleToggle()
 
 void APlayerPawn::Jump()
 {
-	
+	// Set a timer for jump duration
+	GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &APlayerPawn::AdvanceJumpTimer, 1.0f, true);
+	isJumping = true;
+
 	if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
 	{
 		OurMovementComponent->AddInputVector(GetActorUpVector() * jumpStrength);
@@ -175,5 +169,23 @@ void APlayerPawn::ApplyGravity() {
 	if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
 	{
 		OurMovementComponent->AddInputVector(GetActorUpVector() * (-gravityModifier));
+	}
+}
+
+void APlayerPawn::JumpTimerFinished_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Timer done"));
+	isJumping = false;
+}
+
+void APlayerPawn::AdvanceJumpTimer()
+{
+	--jumpTimer;
+	
+	if (jumpTimer < 1)
+	{
+		//We're deone counting down, so stop running the timer.
+		GetWorldTimerManager().ClearTimer(JumpTimerHandle);
+		JumpTimerFinished_Implementation();
 	}
 }

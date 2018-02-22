@@ -19,13 +19,14 @@ void UPlayerPawnMovementComponent::TickComponent(float DeltaTime, enum ELevelTic
 		FHitResult Hit;
 		SafeMoveUpdatedComponent(DesiredMovementThisFrame, UpdatedComponent->GetComponentRotation(), true, Hit);
 
-		FString test = Hit.ToString();
+		//FString test = Hit.ToString();
 		//UE_LOG(LogTemp, Warning, TEXT("Hit Result: %s"), *test);
+
 		// If we bumped into something, try to slide along it
-		/*if (Hit.IsValidBlockingHit())
+		if (Hit.IsValidBlockingHit())
 		{
 			SlideAlongSurface(DesiredMovementThisFrame, 1.f - Hit.Time, Hit.Normal, Hit);
-		}*/
+		}
 	}
 };
 
