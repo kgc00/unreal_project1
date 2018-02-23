@@ -131,7 +131,7 @@ void AMyCharacter::Jump()
 	}
 }
 
-void AMyCharacter::ApplyGravity() {
+void AMyCharacter::GravityLogic() {
 	if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
 	{
 		OurMovementComponent->AddInputVector(GetActorUpVector() * -gravityModifier);

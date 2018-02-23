@@ -26,8 +26,8 @@ APlayerPawn::APlayerPawn()
 	RootComponent = StaticMesh;
 	
 	// initialize box
-	BoxCollider = CreateDefaultSubobject<UBoxComponent>(TEXT("Box Component"));
-	BoxCollider->SetupAttachment(RootComponent);
+	//BoxCollider = CreateDefaultSubobject<UBoxComponent>(TEXT("Box Component"));
+	//BoxCollider->SetupAttachment(RootComponent);
 	
 	// Create a particle system that we can activate or deactivate
 	OurParticleSystem = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MovementParticles"));
@@ -60,6 +60,8 @@ APlayerPawn::APlayerPawn()
 	OurMovementComponent->UpdatedComponent = RootComponent;
 
 	jumpTimer = 3;
+	gravityUp = false;
+	gravityOn = true;
 }
 
 // Called when the game starts or when spawned
@@ -81,7 +83,9 @@ void APlayerPawn::BeginPlay()
 	if (test != nullptr) {
 		AActor::SetActorLocationAndRotation(vectorTest, rotatorTest, false, test, ETeleportType::None);
 	}
-	else { UE_LOG(LogTemp, Warning, TEXT("Nullptr found")); }	
+	else { 
+		UE_LOG(LogTemp, Warning, TEXT("Nullptr found")); 
+	}		
 }
 
 // Called every frame
@@ -97,6 +101,12 @@ void APlayerPawn::Tick(float DeltaTime)
 			UE_LOG(LogTemp, Warning, TEXT("jumping"));
 		}
 	}	
+	if (gravityOn) {
+		if (gravityUp) {
+			StaticMesh->SetPhysicsLinearVelocity(gravityDirectionUp, true, NAME_None);
+			UE_LOG(LogTemp, Warning, TEXT("UP"));
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -113,6 +123,12 @@ void APlayerPawn::SetupPlayerInputComponent(class UInputComponent* InputComponen
 
 void APlayerPawn::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit) {
 	UE_LOG(LogTemp, Warning, TEXT("We have hit something!"))
+	FVector ourLocation = GetActorLocation();
+	FRotator ourRotation = GetActorRotation();
+	FRotator newRotation = FRotator(0,0, 0);
+	SetActorRotation(newRotation, ETeleportType::None);
+	StaticMesh->SetSimulatePhysics(false);
+	StaticMesh->SetSimulatePhysics(true);
 }
 
 UPawnMovementComponent* APlayerPawn::GetMovementComponent() const
@@ -165,11 +181,28 @@ void APlayerPawn::Jump()
 	}
 }
 
-void APlayerPawn::ApplyGravity() {
-	if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
-	{
-		OurMovementComponent->AddInputVector(GetActorUpVector() * (-gravityModifier));
+void APlayerPawn::GravityLogic(bool GravityStatus, bool ReverseGravity) {
+	if (GravityStatus) {
+		if (ReverseGravity)
+		{
+			// turn on reverse gravity for pawn
+			UE_LOG(LogTemp, Warning, TEXT("gravity up"));
+			StaticMesh->SetEnableGravity(true);
+			void SetPhysicsLinearVelocity(FVector gravityDirectionUp, bool bAddToCurrent, FName BoneName);
+		}
+		else {
+			// turn on regular gravity for pawn
+			UE_LOG(LogTemp, Warning, TEXT("gravity on"));
+			StaticMesh->SetEnableGravity(true);
+			void SetPhysicsLinearVelocity(FVector gravityDirectionDown, bool bAddToCurrent, FName BoneName);
+		}
 	}
+	else {
+		// turn off gravity for pawn
+		UE_LOG(LogTemp, Warning, TEXT("gravity off"));
+		StaticMesh->SetEnableGravity(false);
+	}
+	
 }
 
 void APlayerPawn::JumpTimerFinished_Implementation()

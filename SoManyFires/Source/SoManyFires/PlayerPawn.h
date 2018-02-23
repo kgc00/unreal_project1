@@ -67,7 +67,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	float gravityModifier;
 
-	void ApplyGravity();	
+	void GravityLogic(bool GravityStatus, bool ReverseGravity);	
 
 	// Timer logic
 	UPROPERTY(EditAnywhere)
@@ -77,7 +77,12 @@ public:
 	void JumpTimerFinished();
 	virtual void JumpTimerFinished_Implementation();
 	void AdvanceJumpTimer();	
-
+	//void SetPhysicsLinearVelocity(FVector NewVel, bool bAddToCurrent, FName BoneName);
+	FVector gravityDirection = FVector(0.f,0.f,0.f);
+	FVector gravityDirectionUp = FVector(0.f, 0.f, -9.8f);
+	FVector gravityDirectionDown = FVector(0.f, 0.f, 9.8f);
+	bool gravityUp;
+	bool gravityOn;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

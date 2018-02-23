@@ -57,5 +57,5 @@ public:
 	UPROPERTY(EditAnywhere)
 	float gravityModifier;
 
-	void ApplyGravity();
+	void GravityLogic();
 };
