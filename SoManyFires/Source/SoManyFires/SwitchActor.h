@@ -80,6 +80,8 @@ public:
 	
 	void GetPlayerPawn();
 
+	bool winLight;
+
 	AActor* PlayerPawn;
 	APlayerPawn* CustomClassReference;
 

@@ -83,6 +83,10 @@ public:
 	FVector gravityDirectionDown = FVector(0.f, 0.f, 9.8f);
 	bool gravityUp;
 	bool gravityOn;
+	FVector ActorStartLocation;
+	FRotator ActorStartRotation;
+	void PlayerDied();
+	bool hasRespawned;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

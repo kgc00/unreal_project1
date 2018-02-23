@@ -7,6 +7,7 @@
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Engine/Engine.h"
 #include "Runtime/Engine/Classes/Components/SceneComponent.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "PlayerPawnMovementComponent.h"
 
 
@@ -64,6 +65,11 @@ APlayerPawn::APlayerPawn()
 	gravityOn = true;
 }
 
+void APlayerPawn::PlayerDied()
+{
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+}
+
 // Called when the game starts or when spawned
 void APlayerPawn::BeginPlay()
 {
@@ -71,8 +77,8 @@ void APlayerPawn::BeginPlay()
 	isJumping = false;
 	FHitResult *test = new FHitResult;
 	FTransform transformTest = GetTransform();
-	FVector vectorTest = GetActorLocation();
-	FRotator rotatorTest = GetActorRotation();
+	ActorStartLocation = GetActorLocation();
+	ActorStartRotation = GetActorRotation();
 	FQuat quatTest = GetActorQuat();
 	if(StaticMesh != nullptr){
 		StaticMesh->SetSimulatePhysics(true);
@@ -81,7 +87,7 @@ void APlayerPawn::BeginPlay()
 		StaticMesh->OnComponentHit.AddDynamic(this, &APlayerPawn::OnHit);
 	}
 	if (test != nullptr) {
-		AActor::SetActorLocationAndRotation(vectorTest, rotatorTest, false, test, ETeleportType::None);
+		AActor::SetActorLocationAndRotation(ActorStartLocation, ActorStartRotation, false, test, ETeleportType::None);
 	}
 	else { 
 		UE_LOG(LogTemp, Warning, TEXT("Nullptr found")); 
@@ -92,7 +98,6 @@ void APlayerPawn::BeginPlay()
 void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	FHitResult hr;
 
 	if (isJumping){
 		if (OurMovementComponent && (OurMovementComponent->UpdatedComponent == RootComponent))
@@ -106,6 +111,12 @@ void APlayerPawn::Tick(float DeltaTime)
 			StaticMesh->SetPhysicsLinearVelocity(gravityDirectionUp, true, NAME_None);
 			UE_LOG(LogTemp, Warning, TEXT("UP"));
 		}
+	}
+	
+	//UE_LOG(LogTemp, Warning, TEXT("Our Velocity is: %s"), *GetVelocity().ToString());
+
+	if (GetVelocity().Z <= -5000.0f) {
+		PlayerDied();
 	}
 }
 

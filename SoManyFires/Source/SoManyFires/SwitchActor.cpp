@@ -31,7 +31,7 @@ ASwitchActor::ASwitchActor()
 	DesiredColorBlue = FColor(47, 83, 255, 255);
 	DesiredColorGreen = FColor(83, 255, 47, 255);
 	float DesiredIntensity = 3000.0f;
-	DesiredColor = DesiredColorBlue;
+	//DesiredColor = DesiredColorBlue;
 	PointLight1 = CreateDefaultSubobject<UPointLightComponent>(TEXT("PointLight1"));
 	PointLight1->Intensity = DesiredIntensity;
 	PointLight1->SetLightColor(DesiredColor); 
@@ -41,7 +41,7 @@ ASwitchActor::ASwitchActor()
 	BoxCollider->OnComponentBeginOverlap.AddDynamic(this, &ASwitchActor::OnOverlapBegin);
 	BoxCollider->OnComponentEndOverlap.AddDynamic(this, &ASwitchActor::OnOverlapEnd);
 	
-	bGravityStatus = false;
+	//bGravityStatus = false;
 	bReverseGravity = false;
 	cooldownTimer = 5.0f;
 	bCanTriggerEvent = true;
@@ -55,15 +55,20 @@ void ASwitchActor::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, cla
 		if(PlayerPawn != nullptr){
 			if (OtherActor == PlayerPawn)
 			{
-				ActivateSwitch(bGravityStatus, DesiredColor);
+				if (winLight) {
+					UE_LOG(LogTemp, Warning, TEXT("We win"));
+				}
+				else {
+					ActivateSwitch(bGravityStatus, DesiredColor);
 
-				//GetWorldTimerManager().SetTimer(ResetTimerHandle, &ASwitchActor::ActivateSwitch, 1.0f, true, 2.0f);
-				UE_LOG(LogTemp, Warning, TEXT("Overlap Begins"));
-				
-				//SwitchGravity(bGravityStatus);				
-				//FString compname = OverlappedComp->GetName();
-				//FString actorname = OverlappedComp->GetName();
-				//bActivatedSwitch = true;
+					//GetWorldTimerManager().SetTimer(ResetTimerHandle, &ASwitchActor::ActivateSwitch, 1.0f, true, 2.0f);
+					UE_LOG(LogTemp, Warning, TEXT("Overlap Begins"));
+
+					//SwitchGravity(bGravityStatus);				
+					//FString compname = OverlappedComp->GetName();
+					//FString actorname = OverlappedComp->GetName();
+					//bActivatedSwitch = true;
+				}				
 			}
 		}
 	}
@@ -75,9 +80,14 @@ void ASwitchActor::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class
 	{
 		if (OtherActor == PlayerPawn)
 		{
-			//GetWorldTimerManager().SetTimer(ResetTimerHandle, 1.0f, false, 2.0f);
-			ResetSwitch();
-			UE_LOG(LogTemp, Warning, TEXT("Actor Ended Overlap"));
+			if (winLight) {
+				UE_LOG(LogTemp, Warning, TEXT("We win"));
+			}
+			else {
+				//GetWorldTimerManager().SetTimer(ResetTimerHandle, 1.0f, false, 2.0f);
+				ResetSwitch();
+				UE_LOG(LogTemp, Warning, TEXT("Actor Ended Overlap"));
+			}
 		}	
 	}
 }
@@ -87,6 +97,7 @@ void ASwitchActor::ActivateSwitch(bool gravity, FColor color)
 	UE_LOG(LogTemp, Warning, TEXT("Activate the Switch!"));
 	SwitchLightColor(color);
 	SwitchGravity(gravity, bReverseGravity);
+	
 }
 
 void ASwitchActor::SwitchLightColor(FColor color)
@@ -95,12 +106,12 @@ void ASwitchActor::SwitchLightColor(FColor color)
 	if (PointLight1->GetLightColor() == DesiredColorRed)
 	{
 		PointLight1->SetLightColor(DesiredColorBlue);
-		bGravityStatus = true;
+		bGravityStatus = false;
 	}
 	else if (PointLight1->GetLightColor() == DesiredColorBlue)
 	{
 		PointLight1->SetLightColor(DesiredColorRed);
-		bGravityStatus = false;
+		bGravityStatus = true;
 	}
 }
 
@@ -136,6 +147,21 @@ void ASwitchActor::BeginPlay()
 {
 	Super::BeginPlay();
 	GetPlayerPawn();
+	if (DesiredColor == DesiredColorGreen) {
+		UE_LOG(LogTemp, Warning, TEXT("Light is green"));
+		winLight = true;
+		PointLight1->SetLightColor(DesiredColorGreen);
+	}
+	else if (DesiredColor == DesiredColorRed) {
+		winLight = false;
+		PointLight1->SetLightColor(DesiredColorRed);
+		bGravityStatus = true;
+	}
+	else if (DesiredColor == DesiredColorBlue) {
+		winLight = false;
+		PointLight1->SetLightColor(DesiredColorBlue);
+		bGravityStatus = false;
+	}
 }
 
 // Called every frame
